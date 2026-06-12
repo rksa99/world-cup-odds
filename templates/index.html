@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מונדיאל 2026 — מערכת בטים חכמה</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <h1>🏆 מונדיאל 2026</h1>
+      <p class="subtitle">מערכת בטים מבוססת נתונים חיים ו-AI</p>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-btn" onclick="openStats()" title="סטטיסטיקות טוקנים">📊</button>
+      <button class="hdr-btn" onclick="openAgents()" title="הגדרות סוכנים">🤖</button>
+      <button class="hdr-btn" onclick="openSettings()" title="הגדרות">⚙️</button>
+    </div>
+  </header>
+
+  <!-- ── Settings Modal ──────────────────────────────────────── -->
+  <div class="modal-overlay" id="settingsOverlay" onclick="overlayClose(event,'settingsOverlay')">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>⚙️ הגדרות</h2>
+        <button class="modal-close" onclick="closeModal('settingsOverlay')">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="settings-section-title">🤖 מודל AI</div>
+        <div class="field-group">
+          <label for="providerSelect">ספק AI</label>
+          <select id="providerSelect" onchange="onProviderChange()"></select>
+        </div>
+        <div class="field-group">
+          <label for="modelInput">מודל</label>
+          <input type="text" id="modelInput" list="modelSuggestions" placeholder="הקלד או בחר מודל..." autocomplete="off" />
+          <datalist id="modelSuggestions"></datalist>
+          <div class="field-hint" id="modelHint">הצעות מופיעות בהקלדה — ניתן להקליד כל מודל</div>
+        </div>
+        <div class="field-group">
+          <label for="apiKeyInput">מפתח API (מודל AI)</label>
+          <div class="key-input-wrap">
+            <input type="password" id="apiKeyInput" placeholder="הכנס מפתח API..." autocomplete="off" />
+            <button class="toggle-key-btn" onclick="toggleVis('apiKeyInput')" title="הצג/הסתר">👁</button>
+            <button class="test-conn-btn" onclick="testConn('ai', this)" title="בדוק חיבור">🔌 בדוק</button>
+          </div>
+          <div class="field-hint" id="apiKeyHint"></div>
+          <div class="conn-status" id="connStatus-ai"></div>
+        </div>
+
+        <div class="settings-section-title">📡 נתונים חיים</div>
+
+        <div class="field-group">
+          <label for="oddsApiKeyInput">
+            The Odds API Key
+            <span class="field-optional">— לסיכויים חיים מ-40+ בוקמייקרים</span>
+          </label>
+          <div class="key-input-wrap">
+            <input type="password" id="oddsApiKeyInput" placeholder="the-odds-api.com" autocomplete="off" />
+            <button class="toggle-key-btn" onclick="toggleVis('oddsApiKeyInput')" title="הצג/הסתר">👁</button>
+            <button class="test-conn-btn" onclick="testConn('odds', this)" title="בדוק חיבור">🔌 בדוק</button>
+          </div>
+          <div class="field-hint"><a href="https://the-odds-api.com" target="_blank" rel="noopener" style="color:var(--accent)">the-odds-api.com</a> · 500 בקשות/חודש חינם · Basic $25/חודש</div>
+          <div class="conn-status" id="connStatus-odds"></div>
+        </div>
+
+        <div class="field-group">
+          <label for="apifKeyInput">
+            API-Football Key
+            <span class="field-optional">— סטטיסטיקות חיות, xG, H2H, פציעות</span>
+          </label>
+          <div class="key-input-wrap">
+            <input type="password" id="apifKeyInput" placeholder="api-football.com / RapidAPI" autocomplete="off" />
+            <button class="toggle-key-btn" onclick="toggleVis('apifKeyInput')" title="הצג/הסתר">👁</button>
+            <button class="test-conn-btn" onclick="testConn('api_football', this)" title="בדוק חיבור">🔌 בדוק</button>
+          </div>
+          <div class="field-hint"><a href="https://www.api-football.com" target="_blank" rel="noopener" style="color:var(--accent)">api-football.com</a> · 100 בקשות/יום חינם · Essential $9.99/חודש</div>
+          <div class="conn-status" id="connStatus-api_football"></div>
+        </div>
+
+        <div class="field-group">
+          <label for="newsApiKeyInput">
+            NewsAPI Key
+            <span class="field-optional">— חדשות ספורט אמיתיות לפני המשחק</span>
+          </label>
+          <div class="key-input-wrap">
+            <input type="password" id="newsApiKeyInput" placeholder="newsapi.org" autocomplete="off" />
+            <button class="toggle-key-btn" onclick="toggleVis('newsApiKeyInput')" title="הצג/הסתר">👁</button>
+            <button class="test-conn-btn" onclick="testConn('newsapi', this)" title="בדוק חיבור">🔌 בדוק</button>
+          </div>
+          <div class="field-hint"><a href="https://newsapi.org" target="_blank" rel="noopener" style="color:var(--accent)">newsapi.org</a> · 100 בקשות/יום חינם (כותרות בלבד)</div>
+          <div class="conn-status" id="connStatus-newsapi"></div>
+        </div>
+
+        <div class="modal-status" id="settingsStatus"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('settingsOverlay')">ביטול</button>
+        <button class="btn-primary" onclick="saveSettings()">שמור הגדרות</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Token Stats Modal ────────────────────────────────────── -->
+  <div class="modal-overlay" id="statsOverlay" onclick="overlayClose(event,'statsOverlay')">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>📊 סטטיסטיקות שימוש</h2>
+        <button class="modal-close" onclick="closeModal('statsOverlay')">✕</button>
+      </div>
+      <div class="modal-body" id="statsBody">
+        <div class="empty-state">טרם בוצע חיזוי בסשן זה</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="clearStats()">נקה היסטוריה</button>
+        <button class="btn-primary" onclick="closeModal('statsOverlay')">סגור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Agents Config Modal ──────────────────────────────────── -->
+  <div class="modal-overlay" id="agentsOverlay" onclick="overlayClose(event,'agentsOverlay')">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>🤖 סוכנים ומיומנויות</h2>
+        <button class="modal-close" onclick="closeModal('agentsOverlay')">✕</button>
+      </div>
+      <div class="modal-body" id="agentsBody">
+        <div class="empty-state">טוען...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="resetAgentDefaults()">אפס לברירת מחדל</button>
+        <button class="btn-primary" onclick="saveAgents()">שמור שינויים</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pre-tournament predictions -->
+  <section class="pretournament" id="pretournament">
+    <h2 class="section-title">תחזיות טרום-טורניר <span id="ptSourceBadge" class="locked-badge">🔒 סטטי</span></h2>
+    <div class="pt-columns">
+      <div class="pt-column">
+        <div class="pt-col-label">🏆 מועמדות לאליפות</div>
+        <div id="ptWinnerCards" class="pt-cards-col"></div>
+      </div>
+      <div class="pt-column">
+        <div class="pt-col-label">👟 מלך השערים</div>
+        <div id="ptScorerCards" class="pt-cards-col"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Match schedule -->
+  <main class="schedule">
+    {% set stages = [
+      ("Group A","🅰️ קבוצה A"), ("Group B","🅱️ קבוצה B"),
+      ("Group C","🇨 קבוצה C"),  ("Group D","🇩 קבוצה D"),
+      ("Group E","🇪 קבוצה E"),  ("Group F","🇫 קבוצה F"),
+      ("Group G","🇬 קבוצה G"),  ("Group H","🇭 קבוצה H"),
+      ("Group I","🇮 קבוצה I"),  ("Group J","🇯 קבוצה J"),
+      ("Group K","🇰 קבוצה K"),  ("Group L","🇱 קבוצה L"),
+      ("Round of 32","⚔️ שלב 32"),
+      ("Round of 16","🔟 שמינית גמר"),
+      ("Quarterfinal","🎯 רבע גמר"),
+      ("Semifinal","🔥 חצי גמר"),
+      ("Third Place","🥉 מקום שלישי"),
+      ("Final","🏆 גמר")
+    ] %}
+    {% for stage_key, stage_label in stages %}
+      {% set stage_matches = matches | selectattr("stage","equalto",stage_key) | list %}
+      {% if stage_matches %}
+      <section class="stage-section">
+        <h2 class="stage-title">{{ stage_label }}</h2>
+        <div class="matches-grid">
+          {% for match in stage_matches %}
+          <div class="match-card" id="card-{{ match.id }}">
+            <div class="match-meta">
+              <span class="match-date">{{ match.date }}</span>
+              <span class="match-time">{{ match.time }}</span>
+            </div>
+            <div class="match-teams">
+              <div class="team home">
+                <span class="flag">{{ match.home_flag }}</span>
+                <span class="team-name">{{ match.home }}</span>
+              </div>
+              <div class="vs">VS</div>
+              <div class="team away">
+                <span class="team-name">{{ match.away }}</span>
+                <span class="flag">{{ match.away_flag }}</span>
+              </div>
+            </div>
+            <div class="match-venue">📍 {{ match.venue }}</div>
+            {% if match.home != "TBD" and match.away != "TBD" %}
+            <button class="predict-btn" data-match-id="{{ match.id }}" onclick="runPrediction('{{ match.id }}')">
+              ⚡ ניתוח AI + ערך
+            </button>
+            {% else %}
+            <button class="predict-btn disabled" disabled>⏳ קבוצות טרם נקבעו</button>
+            {% endif %}
+            <div class="prediction-result" id="result-{{ match.id }}" style="display:none"></div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    {% endfor %}
+  </main>
+
+  <footer>
+    <p>מופעל על ידי Claude AI · Poisson + Elo · נתונים חיים · מונדיאל 2026</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
