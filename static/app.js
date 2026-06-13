@@ -653,3 +653,81 @@ function getSetting(key) {
   return val;
 }
 function setSetting(key, val) { localStorage.setItem(`wc2026_${key}`, val); }
+
+// ---------------------------------------------------------------------------
+// Schedule view toggle — "by stage" (default) vs "by date & time"
+// Cards are MOVED between the two containers (never duplicated), so prediction
+// results, event handlers, and element ids stay intact.
+// ---------------------------------------------------------------------------
+let _origPositions = null;   // captured once: original stage-view layout
+
+function _captureOrig() {
+  if (_origPositions) return;
+  _origPositions = [...document.querySelectorAll('#stageView .match-card')]
+    .map(c => ({ card: c, parent: c.parentNode }));
+}
+
+function _formatDateHe(iso) {
+  const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const days   = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const parts = (iso || '').split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return iso || '';
+  const [y, m, d] = parts;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return `יום ${days[dt.getUTCDay()]} · ${d} ב${months[m - 1]} ${y}`;
+}
+
+function buildDateView() {
+  const dateView = document.getElementById('dateView');
+  dateView.innerHTML = '';
+  const cards = _origPositions.map(o => o.card);
+  const sorted = [...cards].sort((a, b) => {
+    const ka = `${a.dataset.date}T${a.dataset.time}`;
+    const kb = `${b.dataset.date}T${b.dataset.time}`;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  let curDate = null, grid = null;
+  for (const card of sorted) {
+    const dkey = card.dataset.date || '';
+    if (dkey !== curDate) {
+      curDate = dkey;
+      const sec = document.createElement('section');
+      sec.className = 'stage-section';
+      const h = document.createElement('h2');
+      h.className = 'stage-title';
+      h.textContent = '📅 ' + _formatDateHe(dkey);
+      sec.appendChild(h);
+      grid = document.createElement('div');
+      grid.className = 'matches-grid';
+      sec.appendChild(grid);
+      dateView.appendChild(sec);
+    }
+    grid.appendChild(card);   // moves the live node (with its result + handlers)
+  }
+}
+
+function restoreStageView() {
+  if (!_origPositions) return;
+  // Append in original document order — grids hold only match cards, so
+  // appendChild rebuilds each grid in its original sequence.
+  for (const o of _origPositions) o.parent.appendChild(o.card);
+}
+
+function setView(mode) {
+  _captureOrig();
+  const stageView = document.getElementById('stageView');
+  const dateView  = document.getElementById('dateView');
+  const bStage = document.getElementById('vtStage');
+  const bDate  = document.getElementById('vtDate');
+  if (mode === 'date') {
+    buildDateView();
+    stageView.style.display = 'none';
+    dateView.style.display  = '';
+    bDate.classList.add('active');  bStage.classList.remove('active');
+  } else {
+    restoreStageView();
+    dateView.style.display  = 'none';
+    stageView.style.display = '';
+    bStage.classList.add('active'); bDate.classList.remove('active');
+  }
+}

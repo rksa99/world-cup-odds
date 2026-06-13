@@ -153,8 +153,19 @@
     </div>
   </section>
 
-  <!-- Match schedule -->
-  <main class="schedule">
+  <!-- View toggle -->
+  <div class="view-toggle">
+    <span class="view-toggle-label">תצוגה:</span>
+    <button class="vt-btn active" id="vtStage" onclick="setView('stage')">📑 לפי שלב</button>
+    <button class="vt-btn" id="vtDate" onclick="setView('date')">📅 לפי תאריך ושעה</button>
+  </div>
+
+  <!-- Date-grouped view (populated by JS; cards are MOVED here, not duplicated,
+       so prediction results and handlers are preserved) -->
+  <main class="schedule" id="dateView" style="display:none"></main>
+
+  <!-- Match schedule (grouped by stage) -->
+  <main class="schedule" id="stageView">
     {% set stages = [
       ("Group A","🅰️ קבוצה A"), ("Group B","🅱️ קבוצה B"),
       ("Group C","🇨 קבוצה C"),  ("Group D","🇩 קבוצה D"),
@@ -176,7 +187,7 @@
         <h2 class="stage-title">{{ stage_label }}</h2>
         <div class="matches-grid">
           {% for match in stage_matches %}
-          <div class="match-card" id="card-{{ match.id }}">
+          <div class="match-card" id="card-{{ match.id }}" data-date="{{ match.date }}" data-time="{{ match.time }}">
             <div class="match-meta">
               <span class="match-date">{{ match.date }}</span>
               <span class="match-time">{{ match.time }}</span>
