@@ -165,7 +165,28 @@ header {
 .fo-goals-label { font-size:.78rem; color:var(--muted); }
 .fo-goals-total { font-size:1.1rem; font-weight:800; color:var(--text); direction:ltr; unicode-bidi:isolate; }
 .fo-goals-ou { font-size:.82rem; font-weight:600; color:var(--muted); margin-inline-start:auto; }
+.fo-verdict-prob { font-size:.85rem; font-weight:600; color:var(--muted); }
 .fo-alts { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; padding-top:.55rem; border-top:1px dashed rgba(255,255,255,.1); }
+
+/* ── Correct-score distribution (תוצאה מדויקת) ───────────────── */
+.cs-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:.9rem 1rem; margin:.9rem 0; }
+.cs-head { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:.4rem; margin-bottom:.7rem; }
+.cs-title { font-size:.95rem; font-weight:700; color:var(--text); }
+.cs-sub { font-size:.74rem; color:var(--muted); }
+.cs-rows { display:flex; flex-direction:column; gap:.35rem; }
+.cs-row { display:flex; align-items:center; gap:.55rem; padding:.25rem .4rem; border-radius:7px; }
+.cs-row-pred { background:rgba(245,158,11,.12); outline:1px solid rgba(245,158,11,.45); }
+.cs-score { font-size:.95rem; font-weight:800; color:var(--text); min-width:38px; direction:ltr; unicode-bidi:isolate; text-align:center; }
+.cs-icon { font-size:.8rem; width:1.2em; text-align:center; }
+.cs-bar-wrap { flex:1; height:9px; background:rgba(255,255,255,.06); border-radius:5px; overflow:hidden; }
+.cs-bar { display:block; height:100%; border-radius:5px; }
+.cs-bar-home_win { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.cs-bar-away_win { background:linear-gradient(90deg,#8b5cf6,#a78bfa); }
+.cs-bar-draw     { background:linear-gradient(90deg,#64748b,#94a3b8); }
+.cs-pct { font-size:.82rem; font-weight:700; color:var(--text); min-width:46px; text-align:end; direction:ltr; unicode-bidi:isolate; }
+.cs-odds { font-size:.74rem; color:var(--muted); min-width:46px; text-align:end; direction:ltr; unicode-bidi:isolate; }
+.cs-flag { font-size:.72rem; font-weight:700; color:var(--gold); white-space:nowrap; }
+.cs-note { font-size:.72rem; color:var(--muted); margin-top:.7rem; padding-top:.6rem; border-top:1px dashed rgba(255,255,255,.1); line-height:1.5; }
 .fo-alts-label { font-size:.72rem; color:var(--muted); }
 .fo-alt-chip { font-size:.74rem; font-weight:600; background:rgba(255,255,255,.06); border-radius:6px; padding:2px 8px; }
 .prob-box-win { outline:2px solid var(--gold); background:rgba(245,158,11,.1); }

@@ -411,13 +411,13 @@ function buildResultHTML(d) {
   return `
     ${buildDataSourcesHTML(d)}
     ${buildFinalOutcomeHTML(d, predKey, conf)}
+    ${buildScoreDistHTML(d)}
     <div class="probs-row">
       <div class="prob-box${predKey==='home_win'?' prob-box-win':''}"><div class="prob-label">ניצחון ${escHtml(d.home||'ביתי')}</div><div class="prob-value">${pct(d.home_win_prob)}%</div></div>
       <div class="prob-box${predKey==='draw'?' prob-box-win':''}"><div class="prob-label">תיקו</div><div class="prob-value">${pct(d.draw_prob)}%</div></div>
       <div class="prob-box${predKey==='away_win'?' prob-box-win':''}"><div class="prob-label">ניצחון ${escHtml(d.away||'אורח')}</div><div class="prob-value">${pct(d.away_win_prob)}%</div></div>
     </div>
     <div class="score-xg-row">
-      <div><div class="score-label">תוצאה צפויה</div><div class="score-value">${escHtml(d.predicted_score||'?-?')}</div></div>
       <div style="text-align:center"><div class="xg-label">xG ${escHtml(d.home||'ביתי')}</div><div class="xg-value">${fmt(d.home_xg)}</div></div>
       <div style="text-align:center"><div class="xg-label">xG ${escHtml(d.away||'אורח')}</div><div class="xg-value">${fmt(d.away_xg)}</div></div>
     </div>
@@ -428,6 +428,45 @@ function buildResultHTML(d) {
     ${buildLineMovementHTML(d)}
     ${buildKeyDriversHTML(d)}
     ${buildTokenTag(d)}`;
+}
+
+function buildScoreDistHTML(d) {
+  // "Correct Score" market — the full probability distribution over exact
+  // scorelines (like winner.co.il's תוצאה מדויקת). Every 1X2/Over-Under number
+  // is a SUM over this grid, so this is the most granular view of the model.
+  const mp = d.model_probs || {};
+  const dist = mp.score_dist;
+  if (!Array.isArray(dist) || !dist.length) return '';
+  const pred = d.predicted_score || '';
+  const maxP = Math.max(...dist.map(s => s.prob || 0)) || 1;
+  const OUT_ICON = { home_win: '🏠', away_win: '✈️', draw: '🤝' };
+
+  const rows = dist.map(s => {
+    const p = (s.prob || 0);
+    const pctTxt = (p * 100).toFixed(1);
+    const w = Math.max(4, Math.round((p / maxP) * 100));
+    const isPred = s.score === pred;
+    const odds = s.odds != null ? s.odds.toFixed(2) : '—';
+    return `<div class="cs-row${isPred ? ' cs-row-pred' : ''}">
+      <span class="cs-score">${escHtml(s.score)}</span>
+      <span class="cs-icon" title="${s.outcome}">${OUT_ICON[s.outcome] || ''}</span>
+      <span class="cs-bar-wrap"><span class="cs-bar cs-bar-${s.outcome}" style="width:${w}%"></span></span>
+      <span class="cs-pct">${pctTxt}%</span>
+      <span class="cs-odds" title="יחס הוגן">@${odds}</span>
+      ${isPred ? '<span class="cs-flag">⬅ הבחירה</span>' : ''}
+    </div>`;
+  }).join('');
+
+  const topP = (dist[0].prob * 100).toFixed(0);
+  return `
+    <div class="cs-panel">
+      <div class="cs-head">
+        <span class="cs-title">🎯 תוצאה מדויקת — התפלגות</span>
+        <span class="cs-sub">${escHtml(d.home||'ביתי')} (ביתי) <span dir="ltr">–</span> ${escHtml(d.away||'אורח')} (אורח)</span>
+      </div>
+      <div class="cs-rows">${rows}</div>
+      <div class="cs-note">גם התוצאה הסבירה ביותר היא רק ~${topP}% — בכדורגל אין תוצאה "בטוחה". הסכומים מעל מזינים את כל שאר התחזיות.</div>
+    </div>`;
 }
 
 function buildFinalOutcomeHTML(d, predKey, conf) {
@@ -443,6 +482,12 @@ function buildFinalOutcomeHTML(d, predKey, conf) {
     ? `🤝 תיקו צפוי`
     : `🏆 ניצחון ל${escHtml(winner)}`;
   const score = escHtml(d.predicted_score || '?-?');
+  // Probability of THIS exact scoreline (from the correct-score distribution) —
+  // distinct from the win/draw probability, which sums many scorelines.
+  const dist = (d.model_probs || {}).score_dist || [];
+  const predEntry = dist.find(s => s.score === (d.predicted_score || ''));
+  const exactProb = predEntry ? Math.round(predEntry.prob * 100) : null;
+  const exactOdds = predEntry && predEntry.odds != null ? predEntry.odds.toFixed(2) : null;
   // Goals-total line — a DIFFERENT question from the exact score: the expected
   // total goals and the model's Over/Under 2.5 lean. Shown explicitly so the
   // two numbers don't read as a contradiction.
@@ -460,26 +505,21 @@ function buildFinalOutcomeHTML(d, predKey, conf) {
       <span class="fo-goals-ou">${dir} (${dirProb}%)</span>
     </div>`;
   }
-  // Top-3 most likely scorelines, if available
-  let alt = '';
-  if (Array.isArray(d.top3_scores) && d.top3_scores.length) {
-    const chips = d.top3_scores.map(s =>
-      `<span class="fo-alt-chip">${escHtml(s.score)} · ${Math.round((s.prob||0)*100)}%</span>`).join('');
-    alt = `<div class="fo-alts"><span class="fo-alts-label">תרחישים נוספים:</span>${chips}</div>`;
-  }
+  const exactTag = exactProb != null
+    ? `<span class="fo-winprob">${exactProb}% לתוצאה זו${exactOdds ? ` · יחס @${exactOdds}` : ''}</span>`
+    : '';
   return `
     <div class="final-outcome fo-${predKey}">
       <div class="fo-top">
-        <div class="fo-verdict">${verdict}</div>
+        <div class="fo-verdict">${verdict} <span class="fo-verdict-prob">(${pct(winProb)}%)</span></div>
         <div class="confidence-badge confidence-${conf}">${CONF_LABELS[conf] || conf}</div>
       </div>
       <div class="fo-score-row">
         <span class="fo-score-label">תוצאה מדויקת צפויה</span>
         <span class="fo-score-big">${score}</span>
-        <span class="fo-winprob">${pct(winProb)}% הסתברות</span>
+        ${exactTag}
       </div>
       ${goals}
-      ${alt}
     </div>`;
 }
 

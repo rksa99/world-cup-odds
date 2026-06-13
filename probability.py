@@ -74,6 +74,22 @@ def poisson_model(home_xg: float, away_xg: float) -> dict:
     most_likely = f"{sorted_scores[0][0][0]}-{sorted_scores[0][0][1]}"
     top3 = [{"score": f"{h}-{a}", "prob": round(p, 4)} for (h, a), p in sorted_scores[:3]]
 
+    # Full correct-score distribution (top 8) — the granular "Correct Score"
+    # market. Each scoreline carries its probability, fair decimal odds (1/p),
+    # and which 1X2 outcome it belongs to, so the UI can render it like a
+    # bookmaker's תוצאה מדויקת market.
+    def _outcome_of(h, a):
+        return "home_win" if h > a else "away_win" if a > h else "draw"
+    score_dist = [
+        {
+            "score":   f"{h}-{a}",
+            "prob":    round(p, 4),
+            "odds":    round(1 / p, 2) if p > 0 else None,
+            "outcome": _outcome_of(h, a),
+        }
+        for (h, a), p in sorted_scores[:8]
+    ]
+
     # Most likely score for each outcome — lets the UI show a scoreline that is
     # consistent with BOTH the predicted winner AND the model's own over/under
     # call. Poisson's single modal score (e.g. 1-0) is often a low-scoring line
@@ -118,6 +134,7 @@ def poisson_model(home_xg: float, away_xg: float) -> dict:
         "most_likely_score": most_likely,
         "score_by_outcome": score_by_outcome,
         "top3_scores":   top3,
+        "score_dist":    score_dist,
         "ah_probs":      ah_probs,
         "model":         "poisson_dixon_coles",
     }
@@ -234,7 +251,7 @@ def blend_probabilities(poisson: dict, elo: dict,
     }
     # Carry Poisson-only fields unchanged
     for k in ("over25_prob", "under25_prob", "btts_prob", "home_xg", "away_xg",
-              "most_likely_score", "score_by_outcome", "top3_scores", "ah_probs"):
+              "most_likely_score", "score_by_outcome", "top3_scores", "score_dist", "ah_probs"):
         blended[k] = poisson[k]
     blended["poisson_weight"] = pw
     blended["elo_weight"] = ew
