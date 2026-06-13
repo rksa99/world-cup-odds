@@ -75,9 +75,20 @@ def poisson_model(home_xg: float, away_xg: float) -> dict:
     top3 = [{"score": f"{h}-{a}", "prob": round(p, 4)} for (h, a), p in sorted_scores[:3]]
 
     # Most likely score for each outcome — lets the UI show a scoreline that is
-    # consistent with the predicted winner (Poisson's single modal score is often
-    # a draw even when a win is the likeliest outcome).
+    # consistent with BOTH the predicted winner AND the model's own over/under
+    # call. Poisson's single modal score (e.g. 1-0) is often a low-scoring line
+    # even when the cumulative mass favours Over 2.5, which looks contradictory
+    # to users. We therefore prefer a scoreline matching the totals direction.
+    totals_is_over = over25 > under25
+
     def _top_for(cond):
+        # First try to satisfy the totals direction (Over/Under 2.5) as well as
+        # the outcome; if nothing qualifies, fall back to outcome-only.
+        def _totals_ok(h, a):
+            return (h + a > 2.5) if totals_is_over else (h + a <= 2.5)
+        for (h, a), p in sorted_scores:
+            if cond(h, a) and _totals_ok(h, a):
+                return f"{h}-{a}"
         for (h, a), p in sorted_scores:
             if cond(h, a):
                 return f"{h}-{a}"
