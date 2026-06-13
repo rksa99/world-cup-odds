@@ -724,6 +724,52 @@ Return JSON:
 
 
 # ---------------------------------------------------------------------------
+# Fast baseline preview — pure math, NO live data and NO LLM.
+# Mirrors the pipeline's fallback path (TEAM_STATS + Elo defaults) so a match
+# card can show a Correct-Score distribution instantly, before the user spends
+# an AI call. The full prediction refines this with live xG/odds/news/AI.
+# ---------------------------------------------------------------------------
+
+def build_match_preview(home: str, away: str) -> dict:
+    from probability import HOST_NATIONS, HOST_ELO_BONUS
+    local_home = TEAM_STATS.get(home, {})
+    local_away = TEAM_STATS.get(away, {})
+
+    h_xg = local_home.get("xg_per90", 1.35)
+    a_xg = local_away.get("xg_per90", 1.10)
+    is_host_home = home in HOST_NATIONS
+    if is_host_home:
+        h_xg = round(h_xg * 1.15, 2)
+        a_xg = round(a_xg * 0.90, 2)
+
+    poisson_probs = poisson_model(h_xg, a_xg)
+    home_elo = local_home.get("elo") or ELO_DEFAULTS.get(home, 1800)
+    away_elo = local_away.get("elo") or ELO_DEFAULTS.get(away, 1800)
+    elo_probs = elo_model(home, away, home_elo, away_elo,
+                          home_advantage=HOST_ELO_BONUS if is_host_home else 0.0)
+    mp = blend_probabilities(poisson_probs, elo_probs)
+
+    probs = {"home_win": mp["home_win_prob"], "draw": mp["draw_prob"], "away_win": mp["away_win_prob"]}
+    pred = max(probs, key=probs.get)
+    sbo = mp.get("score_by_outcome") or {}
+    predicted_score = sbo.get(pred) or mp.get("most_likely_score")
+
+    return {
+        "home": home, "away": away,
+        "result_prediction": pred,
+        "home_win_prob": mp["home_win_prob"],
+        "draw_prob":     mp["draw_prob"],
+        "away_win_prob": mp["away_win_prob"],
+        "predicted_score": predicted_score,
+        "expected_goals_total": round((mp["home_xg"] or 0) + (mp["away_xg"] or 0), 2),
+        "over25_prob":  mp["over25_prob"],
+        "under25_prob": mp["under25_prob"],
+        "score_dist":   mp["score_dist"][:4],   # mini view → top 4 scorelines
+        "source": "baseline",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Pipeline entry point
 # ---------------------------------------------------------------------------
 

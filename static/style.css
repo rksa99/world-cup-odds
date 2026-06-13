@@ -187,6 +187,23 @@ header {
 .cs-odds { font-size:.74rem; color:var(--muted); min-width:46px; text-align:end; direction:ltr; unicode-bidi:isolate; }
 .cs-flag { font-size:.72rem; font-weight:700; color:var(--gold); white-space:nowrap; }
 .cs-note { font-size:.72rem; color:var(--muted); margin-top:.7rem; padding-top:.6rem; border-top:1px dashed rgba(255,255,255,.1); line-height:1.5; }
+
+/* ── Mini Correct-Score preview on each match card (math-only baseline) ── */
+.cs-mini { margin:.7rem 0 .6rem; padding:.6rem .65rem; background:var(--surface2); border:1px solid var(--border); border-radius:10px; }
+.cs-mini-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+.cs-mini-label { font-size:.68rem; font-weight:700; color:var(--muted); letter-spacing:.3px; }
+.cs-mini-score { font-size:1.15rem; font-weight:900; color:var(--gold); direction:ltr; unicode-bidi:isolate; }
+.cs-mini-rows { display:flex; flex-direction:column; gap:.28rem; }
+.cs-mini-row { display:flex; align-items:center; gap:.45rem; }
+.cs-mini-pred .cs-mini-sc { color:var(--gold); }
+.cs-mini-sc { font-size:.78rem; font-weight:800; color:var(--text); min-width:30px; direction:ltr; unicode-bidi:isolate; text-align:center; }
+.cs-mini-bar { flex:1; height:7px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden; }
+.cs-mini-fill { display:block; height:100%; border-radius:4px; }
+.cs-mini-home_win { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.cs-mini-away_win { background:linear-gradient(90deg,#8b5cf6,#a78bfa); }
+.cs-mini-draw     { background:linear-gradient(90deg,#64748b,#94a3b8); }
+.cs-mini-pct { font-size:.72rem; font-weight:700; color:var(--muted); min-width:34px; text-align:end; direction:ltr; unicode-bidi:isolate; }
+.cs-mini-note { font-size:.66rem; color:var(--muted); margin-top:.5rem; text-align:center; opacity:.8; }
 .fo-alts-label { font-size:.72rem; color:var(--muted); }
 .fo-alt-chip { font-size:.74rem; font-weight:600; background:rgba(255,255,255,.06); border-radius:6px; padding:2px 8px; }
 .prob-box-win { outline:2px solid var(--gold); background:rgba(245,158,11,.1); }

@@ -2,16 +2,31 @@
 
 from flask import Flask, render_template, jsonify, request
 from data import MATCHES, PRETOURNAMENT_PREDICTIONS
-from agents import run_prediction_pipeline, PROVIDERS, DEFAULT_MODELS, DEFAULT_AGENT_CONFIGS
+from agents import run_prediction_pipeline, build_match_preview, PROVIDERS, DEFAULT_MODELS, DEFAULT_AGENT_CONFIGS
 
 app = Flask(__name__)
 _predictions_cache = {}
 _last_result = {}
+_previews_cache = {}
+
+
+def _get_previews():
+    """Baseline (math-only) per-match previews, computed once and cached.
+    Each is microseconds to compute; cached so page loads stay instant."""
+    if not _previews_cache:
+        for m in MATCHES:
+            if m["home"] == "TBD" or m["away"] == "TBD":
+                continue
+            try:
+                _previews_cache[m["id"]] = build_match_preview(m["home"], m["away"])
+            except Exception:
+                pass
+    return _previews_cache
 
 
 @app.route("/")
 def index():
-    return render_template("index.html", matches=MATCHES)
+    return render_template("index.html", matches=MATCHES, previews=_get_previews())
 
 
 @app.route("/api/providers")

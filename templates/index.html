@@ -205,6 +205,25 @@
             </div>
             <div class="match-venue">📍 {{ match.venue }}</div>
             {% if match.home != "TBD" and match.away != "TBD" %}
+            {% set pv = previews.get(match.id) %}
+            {% if pv %}
+            <div class="cs-mini">
+              <div class="cs-mini-head">
+                <span class="cs-mini-label">תחזית בסיס</span>
+                <span class="cs-mini-score">{{ pv.predicted_score }}</span>
+              </div>
+              <div class="cs-mini-rows">
+                {% for s in pv.score_dist %}
+                <div class="cs-mini-row{% if s.score == pv.predicted_score %} cs-mini-pred{% endif %}">
+                  <span class="cs-mini-sc">{{ s.score }}</span>
+                  <span class="cs-mini-bar"><span class="cs-mini-fill cs-mini-{{ s.outcome }}" style="width: {{ (s.prob * 100 / pv.score_dist[0].prob) | round(0, 'floor') }}%"></span></span>
+                  <span class="cs-mini-pct">{{ (s.prob * 100) | round(0, 'floor') | int }}%</span>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="cs-mini-note">חישוב מתמטי — לחצו לניתוח מלא</div>
+            </div>
+            {% endif %}
             <button class="predict-btn" data-match-id="{{ match.id }}" onclick="runPrediction('{{ match.id }}')">
               ⚡ ניתוח AI + ערך
             </button>
