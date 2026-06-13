@@ -1,10 +1,21 @@
 """Flask server for World Cup 2026 Betting Intelligence System — v3.0"""
 
+import os
 from flask import Flask, render_template, jsonify, request
 from data import MATCHES, PRETOURNAMENT_PREDICTIONS
 from agents import run_prediction_pipeline, build_match_preview, PROVIDERS, DEFAULT_MODELS, DEFAULT_AGENT_CONFIGS
 
 app = Flask(__name__)
+
+# Per-provider env var holding that provider's LLM key. Used as a fallback when
+# the browser doesn't supply a key in the request — lets the deployed site run
+# headless with a server-side key instead of pasting one into the UI each time.
+LLM_KEY_ENV = {
+    "anthropic":  "ANTHROPIC_API_KEY",
+    "openai":     "OPENAI_API_KEY",
+    "google":     "GOOGLE_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
+}
 _predictions_cache = {}
 _last_result = {}
 _previews_cache = {}
@@ -43,11 +54,13 @@ def agents_config():
 def predict(match_id):
     body = request.get_json(silent=True) or {}
     provider         = body.get("provider", "anthropic")
-    api_key          = body.get("api_key", "").strip()
+    # Each key: prefer the value from the UI, fall back to a server env var so the
+    # deployed site can run with keys configured in the host environment.
+    api_key          = body.get("api_key", "").strip()          or os.environ.get(LLM_KEY_ENV.get(provider, ""), "").strip()
     model            = body.get("model") or DEFAULT_MODELS.get(provider, "")
-    odds_api_key     = body.get("odds_api_key", "").strip()
-    api_football_key = body.get("api_football_key", "").strip()
-    newsapi_key      = body.get("newsapi_key", "").strip()
+    odds_api_key     = body.get("odds_api_key", "").strip()      or os.environ.get("ODDS_API_KEY", "").strip()
+    api_football_key = body.get("api_football_key", "").strip()  or os.environ.get("API_FOOTBALL_KEY", "").strip()
+    newsapi_key      = body.get("newsapi_key", "").strip()       or os.environ.get("NEWSAPI_KEY", "").strip()
     agent_overrides  = body.get("agent_overrides")
 
     if not api_key:
