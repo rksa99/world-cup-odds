@@ -153,6 +153,10 @@ header {
 .fo-score-label { font-size:.78rem; color:var(--muted); }
 .fo-score-big { font-size:1.9rem; font-weight:800; color:var(--gold); letter-spacing:1px; direction:ltr; unicode-bidi:isolate; white-space:nowrap; }
 .fo-winprob { font-size:.82rem; color:var(--muted); margin-inline-start:auto; }
+.fo-goals-row { display:flex; align-items:center; gap:.7rem; margin-top:.5rem; }
+.fo-goals-label { font-size:.78rem; color:var(--muted); }
+.fo-goals-total { font-size:1.1rem; font-weight:800; color:var(--text); direction:ltr; unicode-bidi:isolate; }
+.fo-goals-ou { font-size:.82rem; font-weight:600; color:var(--muted); margin-inline-start:auto; }
 .fo-alts { display:flex; align-items:center; flex-wrap:wrap; gap:.4rem; margin-top:.6rem; padding-top:.55rem; border-top:1px dashed rgba(255,255,255,.1); }
 .fo-alts-label { font-size:.72rem; color:var(--muted); }
 .fo-alt-chip { font-size:.74rem; font-weight:600; background:rgba(255,255,255,.06); border-radius:6px; padding:2px 8px; }

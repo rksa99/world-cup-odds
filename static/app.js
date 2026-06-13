@@ -443,6 +443,23 @@ function buildFinalOutcomeHTML(d, predKey, conf) {
     ? `🤝 תיקו צפוי`
     : `🏆 ניצחון ל${escHtml(winner)}`;
   const score = escHtml(d.predicted_score || '?-?');
+  // Goals-total line — a DIFFERENT question from the exact score: the expected
+  // total goals and the model's Over/Under 2.5 lean. Shown explicitly so the
+  // two numbers don't read as a contradiction.
+  let goals = '';
+  const mp = d.model_probs || {};
+  const over = mp.over25_prob, under = mp.under25_prob;
+  if (over != null && under != null) {
+    const isOver = over > under;
+    const dir = isOver ? 'מעל 2.5' : 'מתחת ל-2.5';
+    const dirProb = Math.round((isOver ? over : under) * 100);
+    const total = mp.expected_goals_total != null ? mp.expected_goals_total : '—';
+    goals = `<div class="fo-goals-row">
+      <span class="fo-goals-label">סך שערים צפוי</span>
+      <span class="fo-goals-total">${total}</span>
+      <span class="fo-goals-ou">${dir} (${dirProb}%)</span>
+    </div>`;
+  }
   // Top-3 most likely scorelines, if available
   let alt = '';
   if (Array.isArray(d.top3_scores) && d.top3_scores.length) {
@@ -461,6 +478,7 @@ function buildFinalOutcomeHTML(d, predKey, conf) {
         <span class="fo-score-big">${score}</span>
         <span class="fo-winprob">${pct(winProb)}% הסתברות</span>
       </div>
+      ${goals}
       ${alt}
     </div>`;
 }
